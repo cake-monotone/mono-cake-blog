@@ -1,5 +1,5 @@
 ---
-title: "Language - 언어"
+title: "Language"
 description: "Language notes and references"
 image: cover.png
 style:

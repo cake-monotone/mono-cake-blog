@@ -2,7 +2,7 @@
 mainSections = ["post"]
 # Output page's full content in RSS.
 rssFullContent = true
-favicon        = "img/favicon.png"
+favicon        = "icons/cake.svg"
 
 # Accepted values: "default", "lastmod"
 # default = see https://gohugo.io/quick-reference/glossary/#default-sort-order
@@ -19,7 +19,7 @@ SortBy              = "default"
 
 [sidebar]
     emoji    = "🍰"
-    subtitle = "안녕하세요! 백엔드 개발자로 먹고살고 있는 cake-monotone 입니다. 달콤한 케이크처럼 좋은 하루 보내세요!"
+    subtitle = "‘Cause love is louder in Mono"
     avatar   = "img/avatar.jpg"
 
 [article]

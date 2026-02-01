@@ -1,5 +1,5 @@
 ---
-title: "Math - 수학"
+title: "Math"
 description: "Mathmatics"
 image: cover.jpg
 style:

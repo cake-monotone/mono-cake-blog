@@ -1,5 +1,5 @@
 ---
-title: "Programming - 프로그래밍"
+title: "Programming"
 description: "Programming notes and experiments"
 image: cover.jpg
 style:
