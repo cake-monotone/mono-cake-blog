@@ -1,3 +1,31 @@
 /*
     You can add your own custom styles here.
 */
+:root {
+    --article-font-size: 1.0em;
+}
+
+/* Post header font size adjustment */
+article h1 {
+    font-size: 1.6em;
+}
+
+article h2 {
+    font-size: 1.3em;
+}
+
+article h3 {
+    font-size: 1.15em;
+}
+
+article h4 {
+    font-size: 1.08em;
+}
+
+article h5 {
+    font-size: 1em;
+}
+
+article h6 {
+    font-size: 0.95em;
+}

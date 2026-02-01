@@ -1,0 +1,158 @@
+---
+title: deno에서 rust 코드를 실행해보자 (deno ffi)
+slug: 2023-02-09-deno-ffi
+date: 2023-02-09 23:01:12 +0900
+categories:
+- programming
+tags:
+- deno
+- rust
+- ffi
+lng_pair: id_deno_ffi
+---
+
+## Deno에서 rust 코드를 사용할 수는 없을까?
+
+가능합니다! Deno에서는 이를 위해 FFI (Foreign Function Interface) API를 제공하고
+있습니다. 간단하게 FFI API를 사용하는 프로젝트를 한번 만들어 보면서 어떤
+느낌인지 훑어봅시다.
+
+## Deno FFI
+
+Deno FFI는 C/C++/Rust 등의 언어로 작성된 공유라이브러리(shared library)를
+직접적으로 사용할 수 있게 해주는 기능입니다.
+
+사실 그래서 굳이 rust일 필요는 없고 C++로 작성해도 됩니다. 핵심은 언어가 아니라
+shared library 이니까요.
+
+만약 본격적으로 알아보고 싶으시다면 공식문서(https://deno.land/manual@v1.30.0/runtime/ffi_api)를
+참조해주세요!
+
+## 프로젝트 init
+
+rust 프로젝트를 기반으로 시작해봅시다.
+
+```
+cargo new hello-ffi --lib
+```
+
+`Cargo.toml`에 추가해줍니다.
+
+```
+[lib]
+crate-type = ["cdylib"]
+```
+
+NOTE) "cdylib"이란 rust 코드를 C와 호환되는 스타일의 *공유 라이브러리*로 빌드해야함을 알려주는 옵션입니다.
+
+이어서 deno 프로젝트도 세팅해줍니다.
+
+```
+deno init
+```
+
+```
+├── Cargo.toml
+├── deno.jsonc
+├── main.ts
+└── src
+    └── lib.rs
+```
+
+이런 구조가 되면 기본적인 세팅은 끝났습니다.
+
+물론 프로젝트 구조가 상당히 혼란스럽습니다만, 저희의 목표는 간단하게 ffi를 테스트 해보는 것이니
+우선 무시하구 진행해봅시다.
+
+## 함수 작성
+
+```rust
+// src/lib.rs
+#[no_mangle]
+pub extern "C" fn add(left: usize, right: usize) -> usize {
+    left + right
+}
+```
+
+여기서 "no_mangle"은 컴파일 시 이 함수를 mangling 하지말라고 알려줍니다. 맹글링은
+컴파일러가 좀 더 컴파일러의 입맛에 맞도록 함수 등의 이름을 바꾸는
+것을 말하는데, 우리는 공유라이브러리로 외부에 함수를 노출해야하는 상황이므로 이
+기능을 잠시 꺼야합니다. 만약 `#[no_mangle]`을 붙이지 않는다면, 외부에서는
+"add"라는 함수를 찾을 수 없게 됩니다.
+
+참고로 함수의 리턴 타입과 파라미터 타입은
+[Supported Type Docs](https://deno.land/manual@v1.30.0/runtime/ffi_api#supported-types)을 따라야
+합니다.
+
+제가 직접 Deno 내부 FFI 구현을 보았을 때는, docs에 없는 간단한 struct 타입도 지원하고 있긴 했는데요.
+현재 FFI가 unstable한 기능이기도 하고, docs에 공개된 타입만을 사용하는게 안전해보입니다.
+
+## 빌드!
+
+```
+cargo build
+```
+
+`target/debug`에 공유 라이브러리 파일이 생성 된걸 확인하셨다면 성공입니다!
+
+## Deno에서 사용하기
+
+```ts
+// main.ts
+
+const dylib = Deno.dlopen(
+  "./target/debug/libhello_ffi.so",
+  {
+    "add": { parameters: ["usize", "usize"], result: "usize" },
+  } as const,
+);
+
+console.log(`3 + 6 = ${dylib.symbols.add(3, 6)}`);
+```
+
+`Deno.dlopen`을 사용해서 공유라이브러리를 불러옵니다. 이 함수는 두가지를
+요구하는데요. 첫번째로 공유 라이브러리 파일의 주소가 필요합니다. 파일은 굳이
+local에 있을 필요는 없고, remote uri를 넘겨줘도 잘 작동합니다. 실제 사용하는
+케이스들을 보면 release한 공유 라이브러리 파일을 CDN에 올려놓고 가져다 쓰는
+방법을 많이 쓰는 것 같습니다.
+
+두번째로는 공유라이브러리에 정의된 함수의 인터페이스 정보를 받습니다. Deno는 이
+정보를 기준으로 라이브러리의 함수와 통신하게 됩니다. 또 타이핑을 굉장히
+잘해놓아서, 매번 함수의 인터페이스가 어떤지 확인할 필요가 없이 `dylib.symbols`에
+정의된 함수를 IDE의 도움을 받아서 편하게 쓸 수 있습니다.
+
+```
+deno --allow-read --allow-ffi --unstable main.ts
+```
+
+권한은 ffi를 사용하기 위한 `--allow-ffi`, 라이브러리 파일을 읽어오기 위한
+`--allow-read`가 필요합니다. 만약 remote url로 파일을 가져온다면 `--allow-net`이
+필요합니다.
+
+```
+3 + 6 = 9
+```
+
+완벽하군요. ☺️
+
+## deno_bindgen?
+
+공식 문서를 읽으신 분은 이미 아실 수도 있겠습니다만, deno에서 ffi를 좀 더 편하게 쓸
+수 있도록 `deno_bindgen`라는 라이브러리를 제공합니다.
+
+그렇지만 제 개인적인 의견으로는, 아직 사용하기에 조금 미숙한 라이브러리이지 않나 싶습니다. (2023-02-22 기준)
+
+여러가지 문제가 있지만 현재 가장 큰 문제는 메모리 누수입니다. deno_bindgen이 복잡한 return value를 deno
+런타임으로 전달하기 위해서 포인터를 사용하는데, 현재 구현 상 메모리 할당 후
+free를 하지 않고 있습니다. 현재 이 문제가 issue로 올라와있고 그렇긴 합니다만, 아직 제대로
+해결되기까지는 시간이 걸릴 듯 합니다.
+
+## 맥빠지는 결론...
+
+솔직하게 말해서 현재 FFI를 쓰는 것을 추천드리지는 않습니다. 현재 이 기능이
+unstable로 관리되고 있기도 하고. 무엇보다 똑같은 작업을 stable한 기능인 WASM으로
+대체할 수 있습니다. 무엇보다 WASM은 parameter나 return value를 교환하는 작업이 훨씬 쉽습니다.
+
+이미 존재하는 공유 라이브러리를 가져다 써야하는 경우가 아니라면, 크게 메리트가 없어 보이는게 제 의견입니다.
+
+그래도 어떠신가요?

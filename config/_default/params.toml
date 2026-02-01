@@ -10,7 +10,7 @@ favicon        = "img/favicon.png"
 SortBy              = "default"
 
 [footer]
-    since      = 2020
+    since      = 2019
     customText = ""
 
 [dateFormat]
@@ -18,13 +18,13 @@ SortBy              = "default"
     lastUpdated = ":date_full"
 
 [sidebar]
-    emoji    = "🍥"
-    subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-    avatar   = "img/avatar.png"
+    emoji    = "🍰"
+    subtitle = "안녕하세요! 백엔드 개발자로 먹고살고 있는 cake-monotone 입니다. 달콤한 케이크처럼 좋은 하루 보내세요!"
+    avatar   = "img/avatar.jpg"
 
 [article]
-    headingAnchor = false
-    math          = false
+    headingAnchor = false 
+    math          = true
     readingTime   = true
 
     [article.license]
@@ -34,9 +34,7 @@ SortBy              = "default"
 [widgets]
     homepage = [
         { type = "search" },
-        { type = "archives", params = { limit = 5 } },
-        { type = "categories", params = { limit = 10 } },
-        { type = "tag-cloud", params = { limit = 10 } },
+        { type = "archives", params = { limit = 5 } }
     ]
     page = [{ type = "toc" }]
 
@@ -50,7 +48,7 @@ SortBy              = "default"
 
 ## Comments
 [comments]
-    enabled  = true
+    enabled  = false
     provider = "disqus"
 
     # See all the available configurations at https://github.com/CaiJimmy/hugo-theme-stack/blob/master/config/_default/params.toml
